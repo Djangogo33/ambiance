@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #0f0f14; color: #f0f0f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; gap: 1rem; }
+h1 { font-size: 1.3rem; font-weight: 500; letter-spacing: 0.04em; }
+.subtitle { font-size: 0.82rem; color: #666; }
+.moods { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.mood-btn {
+  background: #1a1a24; border: 1px solid #333; border-radius: 14px;
+  padding: 11px 16px; cursor: pointer; font-size: 0.82rem; color: #bbb;
+  transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+}
+.mood-btn:hover { border-color: #666; color: #fff; transform: translateY(-2px); }
+.mood-btn.active { color: #fff; border-width: 2px; transform: translateY(-2px); }
+canvas { border-radius: 16px; width: 100%; max-width: 680px; height: 200px; display: block; }
+.palette { display: flex; gap: 8px; max-width: 680px; width: 100%; }
+.swatch { height: 24px; flex: 1; border-radius: 8px; transition: background 0.6s; }
+.panel { max-width: 680px; width: 100%; background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 14px; padding: 1.1rem 1.3rem; transition: border-color 0.5s; }
+.quote-text { font-size: 0.97rem; font-style: italic; line-height: 1.65; color: #ddd; }
+.quote-author { font-size: 0.78rem; color: #555; margin-top: 7px; }
+
+.controls { max-width: 680px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ctrl-panel { background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 14px; padding: 1rem 1.2rem; }
+.ctrl-title { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+.ctrl-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ctrl-row label { font-size: 0.8rem; color: #999; min-width: 80px; }
+input[type=range] { flex: 1; accent-color: #7b8cde; cursor: pointer; }
+.ctrl-val { font-size: 0.8rem; color: #ccc; min-width: 30px; text-align: right; }
+
+.music-panel { max-width: 680px; width: 100%; background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 14px; padding: 1rem 1.3rem; }
+.music-title { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+.music-row { display: flex; align-items: center; gap: 10px; }
+.play-btn {
+  background: none; border: 1px solid #444; border-radius: 50%;
+  width: 38px; height: 38px; cursor: pointer; font-size: 1rem;
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.play-btn:hover { border-color: #888; transform: scale(1.08); }
+.track-info { flex: 1; }
+.track-name { font-size: 0.88rem; color: #ddd; }
+.track-mood { font-size: 0.75rem; color: #555; margin-top: 2px; }
+.vol-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.vol-row label { font-size: 0.78rem; color: #666; }
+.vol-row input { flex: 1; accent-color: #7b8cde; }
+.visualizer { display: flex; align-items: flex-end; gap: 3px; height: 28px; margin-top: 10px; }
+.vbar { width: 5px; border-radius: 3px 3px 0 0; background: #444; transition: background 0.5s; animation: none; }
+.vbar.playing { animation: bounce var(--d, 0.5s) ease-in-out infinite alternate; }
+@keyframes bounce { from { height: 4px; } to { height: var(--h, 20px); } }
+
+.timer-panel { max-width: 680px; width: 100%; background: #1a1a24; border: 1px solid #2a2a3a; border-radius: 14px; padding: 1rem 1.3rem; }
+.timer-display { font-size: 2.2rem; font-weight: 300; text-align: center; letter-spacing: 0.08em; color: #ddd; margin: 10px 0; }
+.timer-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.t-btn {
+  background: none; border: 1px solid #333; border-radius: 10px;
+  padding: 7px 14px; font-size: 0.8rem; color: #aaa; cursor: pointer;
+  transition: all 0.2s;
+}
+.t-btn:hover { border-color: #666; color: #fff; }
+.t-btn.active-timer { border-width: 2px; color: #fff; }
+</style>
+</head>
+<body>
+
+<h1>✦ Machine à ambiance</h1>
+<p class="subtitle">Choisissez votre humeur, laissez-vous envelopper.</p>
+
+<div class="moods">
+  <button class="mood-btn" onclick="setMood('focus')" id="btn-focus">🎯 Concentration</button>
+  <button class="mood-btn" onclick="setMood('calm')" id="btn-calm">🌊 Sérénité</button>
+  <button class="mood-btn" onclick="setMood('create')" id="btn-create">✨ Créativité</button>
+  <button class="mood-btn" onclick="setMood('energy')" id="btn-energy">⚡ Énergie</button>
+  <button class="mood-btn" onclick="setMood('dream')" id="btn-dream">🌙 Rêverie</button>
+</div>
+
+<canvas id="canvas" width="680" height="200"></canvas>
+
+<div class="palette" id="palette">
+  <div class="swatch" style="background:#1a1a24"></div>
+  <div class="swatch" style="background:#1a1a24"></div>
+  <div class="swatch" style="background:#1a1a24"></div>
+  <div class="swatch" style="background:#1a1a24"></div>
+  <div class="swatch" style="background:#1a1a24"></div>
+</div>
+
+<!-- Citation -->
+<div class="panel" id="quote-box">
+  <p class="quote-text" id="quote-text">Choisissez une ambiance pour commencer...</p>
+  <p class="quote-author" id="quote-author"></p>
+</div>
+
+<!-- Musique générative -->
+<div class="music-panel" id="music-panel">
+  <div class="music-title">Musique générative</div>
+  <div class="music-row">
+    <button class="play-btn" id="play-btn" onclick="toggleMusic()">▶</button>
+    <div class="track-info">
+      <div class="track-name" id="track-name">—</div>
+      <div class="track-mood" id="track-mood">Sélectionnez une ambiance</div>
+    </div>
+  </div>
+  <div class="vol-row">
+    <label>Volume</label>
+    <input type="range" min="0" max="100" value="60" id="vol-slider" oninput="setVolume(this.value)">
+    <span class="ctrl-val" id="vol-val">60</span>
+  </div>
+  <div class="visualizer" id="visualizer"></div>
+</div>
+
+<!-- Contrôles visuels -->
+<div class="controls">
+  <div class="ctrl-panel">
+    <div class="ctrl-title">Visuel</div>
+    <div class="ctrl-row">
+      <label>Particules</label>
+      <input type="range" min="10" max="120" value="40" id="particle-count" oninput="updateParticleCount(this.value)">
+      <span class="ctrl-val" id="pc-val">40</span>
+    </div>
+    <div class="ctrl-row">
+      <label>Vitesse</label>
+      <input type="range" min="1" max="10" value="5" id="speed-slider" oninput="updateSpeed(this.value)">
+      <span class="ctrl-val" id="sp-val">5</span>
+    </div>
+    <div class="ctrl-row">
+      <label>Taille</label>
+      <input type="range" min="1" max="10" value="5" id="size-slider" oninput="updateSize(this.value)">
+      <span class="ctrl-val" id="sz-val">5</span>
+    </div>
+  </div>
+  <div class="ctrl-panel">
+    <div class="ctrl-title">Minuteur</div>
+    <div class="timer-display" id="timer-display">25:00</div>
+    <div class="timer-btns">
+      <button class="t-btn" onclick="setTimer(25)">25 min</button>
+      <button class="t-btn" onclick="setTimer(45)">45 min</button>
+      <button class="t-btn" onclick="setTimer(60)">60 min</button>
+      <button class="t-btn" id="timer-toggle" onclick="toggleTimer()">Démarrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const moods = {
+  focus: {
+    colors: ['#0d1b2a','#1b3a5c','#2e6b9e','#5ba3d0','#a8dadc'],
+    accent: '#5ba3d0',
+    quote: "La concentration est la racine de toute capacité humaine élevée.",
+    author: "— Bruce Lee",
+    type: 'dots',
+    music: { name: "Onde alpha — concentration", scale: [261, 294, 329, 392, 440], tempo: 1.4, wave: 'sine', baseFreq: 40 }
+  },
+  calm: {
+    colors: ['#0a2e1f','#145a32','#1e8449','#52b788','#95d5b2'],
+    accent: '#52b788',
+    quote: "Dans le calme réside la vraie puissance.",
+    author: "— Lao Tseu",
+    type: 'waves',
+    music: { name: "Drone naturel — sérénité", scale: [220, 247, 277, 330, 370], tempo: 2.2, wave: 'sine', baseFreq: 20 }
+  },
+  create: {
+    colors: ['#1a0a2e','#4a1a7a','#9b59b6','#c77dff','#e0aaff'],
+    accent: '#c77dff',
+    quote: "La créativité, c'est l'intelligence qui s'amuse.",
+    author: "— Albert Einstein",
+    type: 'sparks',
+    music: { name: "Arpège stellaire — créativité", scale: [349, 392, 466, 523, 587], tempo: 0.9, wave: 'triangle', baseFreq: 0 }
+  },
+  energy: {
+    colors: ['#2d0000','#7b1a00','#d62828','#f77f00','#fcbf49'],
+    accent: '#f77f00',
+    quote: "L'énergie et la persistance conquièrent toutes choses.",
+    author: "— Benjamin Franklin",
+    type: 'burst',
+    music: { name: "Pulse rythmique — énergie", scale: [130, 165, 196, 220, 261], tempo: 0.5, wave: 'sawtooth', baseFreq: 60 }
+  },
+  dream: {
+    colors: ['#080c1a','#1a2040','#344080','#7b8cde','#c5caf0'],
+    accent: '#7b8cde',
+    quote: "Ceux qui rêvent éveillés connaissent mille choses qui échappent à ceux qui ne rêvent que la nuit.",
+    author: "— Edgar Allan Poe",
+    type: 'stars',
+    music: { name: "Pad onirique — rêverie", scale: [196, 220, 261, 311, 349], tempo: 3.0, wave: 'sine', baseFreq: 7 }
+  }
+};
+
+let currentMood = null;
+let animId = null;
+let particles = [];
+let speedMult = 1, sizeMult = 1, targetCount = 40;
+let audioCtx = null, musicPlaying = false, musicNodes = [], musicTimeout = null;
+let timerSeconds = 25 * 60, timerRunning = false, timerInterval = null;
+
+// --- VISUALIZER ---
+const vizEl = document.getElementById('visualizer');
+for (let i = 0; i < 18; i++) {
+  const b = document.createElement('div');
+  b.className = 'vbar';
+  const h = 6 + Math.random() * 20;
+  const d = (0.3 + Math.random() * 0.5).toFixed(2);
+  b.style.setProperty('--h', h + 'px');
+  b.style.setProperty('--d', d + 's');
+  b.style.height = '4px';
+  b.style.animationDelay = (Math.random() * 0.4).toFixed(2) + 's';
+  vizEl.appendChild(b);
+}
+
+function setVizColor(color) {
+  document.querySelectorAll('.vbar').forEach(b => b.style.background = color);
+}
+
+function setVizPlaying(playing) {
+  document.querySelectorAll('.vbar').forEach(b => {
+    b.className = 'vbar' + (playing ? ' playing' : '');
+  });
+}
+
+// --- AUDIO ---
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function stopMusic() {
+  musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  musicNodes = [];
+  if (musicTimeout) clearTimeout(musicTimeout);
+  setVizPlaying(false);
+  document.getElementById('play-btn').textContent = '▶';
+  musicPlaying = false;
+}
+
+function playNote(freq, startTime, duration, wave, gainVal, ctx, dest) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const vol = document.getElementById('vol-slider').value / 100 * 0.18;
+  osc.type = wave;
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainVal * vol, startTime + 0.08);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration * 0.9);
+  osc.connect(gain); gain.connect(dest);
+  osc.start(startTime); osc.stop(startTime + duration);
+  musicNodes.push(osc);
+}
+
+function startMusicLoop() {
+  if (!currentMood) return;
+  const ctx = getAudioCtx();
+  const m = moods[currentMood].music;
+  const reverb = ctx.createConvolver();
+  const master = ctx.createGain();
+  master.gain.value = 1;
+  master.connect(ctx.destination);
+
+  const scale = m.scale;
+  let t = ctx.currentTime;
+
+  // drone de fond
+  if (m.baseFreq > 0) {
+    const drone = ctx.createOscillator();
+    const droneGain = ctx.createGain();
+    const vol = document.getElementById('vol-slider').value / 100 * 0.04;
+    drone.type = 'sine';
+    drone.frequency.value = m.baseFreq;
+    droneGain.gain.value = vol;
+    drone.connect(droneGain); droneGain.connect(master);
+    drone.start(); musicNodes.push(drone);
+  }
+
+  function scheduleNotes() {
+    if (!musicPlaying) return;
+    const now = ctx.currentTime;
+    const notesAhead = 4;
+    for (let i = 0; i < notesAhead; i++) {
+      const freq = scale[Math.floor(Math.random() * scale.length)] * (Math.random() > 0.7 ? 2 : 1);
+      const dur = m.tempo * (0.5 + Math.random() * 1.5);
+      playNote(freq, t, dur, m.wave, 0.25, ctx, master);
+      t += m.tempo * (0.4 + Math.random() * 0.8);
+    }
+    const delay = (t - now - 1) * 1000;
+    musicTimeout = setTimeout(scheduleNotes, Math.max(100, delay));
+  }
+  scheduleNotes();
+}
+
+function toggleMusic() {
+  if (!currentMood) return;
+  if (musicPlaying) {
+    stopMusic();
+  } else {
+    musicPlaying = true;
+    document.getElementById('play-btn').textContent = '⏸';
+    setVizPlaying(true);
+    setVizColor(moods[currentMood].accent);
+    startMusicLoop();
+  }
+}
+
+function setVolume(v) {
+  document.getElementById('vol-val').textContent = v;
+}
+
+// --- MOOD ---
+function setMood(key) {
+  currentMood = key;
+  const m = moods[key];
+
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.borderColor = ''; b.style.boxShadow = '';
+  });
+  const btn = document.getElementById('btn-' + key);
+  btn.classList.add('active');
+  btn.style.borderColor = m.accent;
+  btn.style.boxShadow = `0 0 14px ${m.accent}44`;
+
+  document.getElementById('quote-text').textContent = m.quote;
+  document.getElementById('quote-author').textContent = m.author;
+  document.getElementById('quote-box').style.borderColor = m.accent + '55';
+  document.getElementById('music-panel').style.borderColor = m.accent + '55';
+  document.getElementById('track-name').textContent = m.music.name;
+  document.getElementById('track-mood').textContent = key.charAt(0).toUpperCase() + key.slice(1);
+
+  const pal = document.getElementById('palette');
+  pal.innerHTML = m.colors.map(c => `<div class="swatch" style="background:${c}"></div>`).join('');
+
+  document.querySelectorAll('.t-btn, .ctrl-panel').forEach(el => el.style.borderColor = '');
+
+  if (musicPlaying) { stopMusic(); musicPlaying = true; document.getElementById('play-btn').textContent = '⏸'; setVizPlaying(true); setVizColor(m.accent); startMusicLoop(); }
+  else setVizColor(m.accent);
+
+  startCanvas(key);
+}
+
+// --- CANVAS ---
+function updateParticleCount(v) { document.getElementById('pc-val').textContent = v; targetCount = +v; if (currentMood) startCanvas(currentMood); }
+function updateSpeed(v) { document.getElementById('sp-val').textContent = v; speedMult = v / 5; }
+function updateSize(v) { document.getElementById('sz-val').textContent = v; sizeMult = v / 5; }
+
+function startCanvas(key) {
+  if (animId) cancelAnimationFrame(animId);
+  particles = [];
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 680, H = 200;
+  const m = moods[key];
+  const count = targetCount;
+
+  if (key === 'focus') {
+    for (let i = 0; i < count; i++) particles.push({ x: Math.random()*W, y: Math.random()*H, r: 1.5+Math.random()*2.5, speed: 0.2+Math.random()*0.4, phase: Math.random()*Math.PI*2 });
+  } else if (key === 'calm') {
+    for (let i = 0; i < Math.min(count, 10); i++) particles.push({ yBase: 15+i*20, amp: 8+Math.random()*14, freq: 0.01+Math.random()*0.006, phase: Math.random()*Math.PI*2, sp: 0.008+Math.random()*0.006, alpha: 0.12+(9-i)*0.04 });
+  } else if (key === 'create') {
+    for (let i = 0; i < count; i++) particles.push({ x: Math.random()*W, y: Math.random()*H, r: 1+Math.random()*3, angle: Math.random()*Math.PI*2, speed: 0.4+Math.random()*0.8, hue: 260+Math.random()*80, phase: Math.random()*Math.PI*2 });
+  } else if (key === 'energy') {
+    for (let i = 0; i < count; i++) { const a = Math.random()*Math.PI*2, sp = 1.5+Math.random()*3; particles.push({ x: W/2, y: H/2, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, r: 1.5+Math.random()*3, life: Math.random(), decay: 0.005+Math.random()*0.01, hue: 20+Math.random()*30 }); }
+  } else if (key === 'dream') {
+    for (let i = 0; i < count; i++) particles.push({ x: Math.random()*W, y: Math.random()*H, r: 0.6+Math.random()*2, twinkle: Math.random()*Math.PI*2, ts: 0.015+Math.random()*0.04, drift: (Math.random()-0.5)*0.15 });
+  }
+
+  let t = 0;
+  function draw() {
+    t += 0.016;
+    const s = speedMult, sz = sizeMult;
+    const gr = ctx.createLinearGradient(0, 0, W, H);
+    gr.addColorStop(0, m.colors[0]); gr.addColorStop(0.5, m.colors[1]); gr.addColorStop(1, m.colors[2]);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+
+    if (key === 'focus') {
+      particles.forEach(p => {
+        p.y -= p.speed * s;
+        if (p.y < -p.r) p.y = H + p.r;
+        const a = 0.3 + 0.4*Math.sin(t*1.5+p.phase);
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r*sz, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(91,163,208,${a})`; ctx.fill();
+      });
+    } else if (key === 'calm') {
+      particles.forEach((p, i) => {
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 4) {
+          const y = p.yBase + Math.sin(x*p.freq + t*p.sp*40*s + p.phase)*p.amp*sz;
+          i===0&&x===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+        }
+        ctx.strokeStyle = `rgba(82,183,136,${p.alpha})`; ctx.lineWidth = 1.5*sz; ctx.stroke();
+      });
+    } else if (key === 'create') {
+      particles.forEach(p => {
+        p.angle += 0.012*p.speed*s; p.x += Math.sin(p.angle)*p.speed*s*0.7; p.y += Math.cos(p.angle*0.8)*p.speed*s*0.5;
+        if (p.x<0) p.x=W; if (p.x>W) p.x=0; if (p.y<0) p.y=H; if (p.y>H) p.y=0;
+        const a = 0.4+0.5*Math.abs(Math.sin(t*p.speed+p.phase));
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r*sz, 0, Math.PI*2);
+        ctx.fillStyle = `hsla(${p.hue+Math.sin(t*0.5)*30},80%,70%,${a})`; ctx.fill();
+      });
+    } else if (key === 'energy') {
+      ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.fillRect(0,0,W,H);
+      particles.forEach(p => {
+        p.x += p.vx*s; p.y += p.vy*s; p.life -= p.decay*s;
+        if (p.life <= 0) { const a = Math.random()*Math.PI*2, sp = 1.5+Math.random()*3; p.x=W/2+(Math.random()-0.5)*40; p.y=H/2+(Math.random()-0.5)*20; p.vx=Math.cos(a)*sp; p.vy=Math.sin(a)*sp; p.life=0.8+Math.random()*0.2; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r*sz*p.life, 0, Math.PI*2);
+        ctx.fillStyle = `hsla(${p.hue},100%,65%,${p.life*0.8})`; ctx.fill();
+      });
+    } else if (key === 'dream') {
+      particles.forEach(p => {
+        p.twinkle += p.ts*s; p.x += p.drift*s;
+        if (p.x<0) p.x=W; if (p.x>W) p.x=0;
+        const a = 0.1+0.7*(0.5+0.5*Math.sin(p.twinkle));
+        const size = p.r*sz*(0.7+0.6*Math.abs(Math.sin(p.twinkle*1.2)));
+        ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(197,202,240,${a})`; ctx.fill();
+      });
+    }
+    animId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// --- TIMER ---
+function formatTime(s) { const m = Math.floor(s/60), sec = s%60; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+function setTimer(min) { if (timerRunning) toggleTimer(); timerSeconds = min*60; document.getElementById('timer-display').textContent = formatTime(timerSeconds); }
+function toggleTimer() {
+  timerRunning = !timerRunning;
+  const btn = document.getElementById('timer-toggle');
+  if (timerRunning) {
+    btn.textContent = 'Pause';
+    btn.classList.add('active-timer');
+    if (currentMood) btn.style.borderColor = moods[currentMood].accent;
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval); timerRunning = false;
+        btn.textContent = 'Démarrer'; btn.classList.remove('active-timer');
+        document.getElementById('timer-display').textContent = '✓ Terminé';
+      }
+    }, 1000);
+  } else {
+    clearInterval(timerInterval);
+    btn.textContent = 'Reprendre';
+    btn.classList.remove('active-timer');
+  }
+}
+</script>
+</body>
+</html>
