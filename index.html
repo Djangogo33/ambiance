@@ -1,435 +1,183 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#080b14;--surface:rgba(255,255,255,0.05);--surface2:rgba(255,255,255,0.03);
-  --border:rgba(255,255,255,0.08);--text:#f0f0f8;--muted:#6b7280;--accent:#7b8cde;
-  --r:14px;--font:system-ui,sans-serif;
-}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-.glow{position:fixed;inset:0;background:radial-gradient(ellipse at 15% 15%,rgba(123,140,222,.1) 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(168,130,210,.07) 0%,transparent 55%);pointer-events:none;transition:background 1.2s;z-index:0}
-.app{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:0 16px 80px}
-
-/* HEADER */
-.hdr{padding:22px 0 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.hdr-left h1{font-size:1.05rem;font-weight:700;letter-spacing:.02em}
-.hdr-left .date{font-size:.75rem;color:var(--muted);margin-top:3px;text-transform:capitalize}
-.wx{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;min-width:130px;flex-shrink:0}
-.wx-icon{font-size:1.9rem;line-height:1}
-.wx-temp{font-size:1.4rem;font-weight:800;line-height:1}
-.wx-desc,.wx-feels{font-size:.68rem;color:var(--muted)}
-.wx-desc{margin-top:2px}
-
-/* NAV */
-.nav{display:flex;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:18px}
-.nav-btn{flex:1;padding:9px 6px;border:none;background:none;cursor:pointer;font-size:.8rem;color:var(--muted);border-radius:9px;transition:all .2s;font-family:var(--font);font-weight:500;white-space:nowrap}
-.nav-btn.on{background:rgba(255,255,255,.1);color:var(--text)}
-
-/* CARD */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;transition:border-color .6s}
-.lbl{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:11px}
-
-/* MOODS */
-.moods{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
-.mood-btn{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px 13px;cursor:pointer;font-size:.79rem;color:var(--muted);font-family:var(--font);transition:all .2s;display:flex;align-items:center;gap:6px}
-.mood-btn:hover{border-color:rgba(255,255,255,.22);color:var(--text);transform:translateY(-1px)}
-.mood-btn.on{color:var(--text);border-width:1.5px;transform:translateY(-1px);background:rgba(255,255,255,.06)}
-
-/* CANVAS */
-canvas{border-radius:12px;width:100%;height:170px;display:block;margin-bottom:12px}
-
-/* PALETTE */
-.pal{display:flex;gap:5px;margin-bottom:12px}
-.sw{height:5px;flex:1;border-radius:3px;transition:background .8s}
-
-/* QUOTE */
-.qt{font-size:.93rem;font-style:italic;line-height:1.75;color:#ddd}
-.qa{font-size:.73rem;color:var(--muted);margin-top:7px}
-.pulse{animation:pulse 1.4s ease-in-out infinite;color:var(--muted);font-style:italic;font-size:.85rem}
-@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
-.ghost-btn{margin-top:11px;padding:6px 11px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.76rem;cursor:pointer;font-family:var(--font);transition:all .2s}
-.ghost-btn:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
-
-/* MUSIC */
-.mrow{display:flex;align-items:center;gap:12px}
-.play-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;font-size:.88rem;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
-.play-btn:hover{background:var(--surface2);transform:scale(1.07)}
-.tname{font-size:.87rem;font-weight:600;color:#ddd}
-.tsub{font-size:.7rem;color:var(--muted);margin-top:2px}
-.vrow{display:flex;align-items:center;gap:9px;margin-top:11px}
-.vrow label{font-size:.73rem;color:var(--muted)}
-input[type=range]{flex:1;cursor:pointer;accent-color:var(--accent)}
-.cv{font-size:.76rem;color:var(--muted);min-width:26px;text-align:right}
-.viz{display:flex;align-items:flex-end;gap:3px;height:22px;margin-top:10px}
-.vb{width:5px;border-radius:3px 3px 0 0;background:rgba(255,255,255,.12);transition:background .5s}
-.vb.p{animation:vb var(--d,.5s) ease-in-out infinite alternate}
-@keyframes vb{from{height:3px}to{height:var(--h,18px)}}
-
-/* CONTROLS GRID */
-.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.crow{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.crow label{font-size:.76rem;color:var(--muted);min-width:68px}
-.tdis{font-size:2.6rem;font-weight:200;text-align:center;letter-spacing:.1em;color:#ddd;margin:10px 0}
-.tbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.tbtn{background:none;border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:.77rem;color:var(--muted);cursor:pointer;font-family:var(--font);transition:all .2s}
-.tbtn:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
-.tbtn.at{color:var(--text);border-width:1.5px}
-
-/* TODOS */
-.irow{display:flex;gap:8px;margin-bottom:14px}
-.irow input,.itxt{flex:1;padding:11px 13px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--font);font-size:.87rem;outline:none;transition:border-color .2s}
-.irow input:focus,.itxt:focus{border-color:rgba(255,255,255,.2)}
-.itxt{width:100%;resize:vertical;min-height:78px}
-.abtn{padding:11px 17px;background:var(--accent);border:none;border-radius:11px;color:#fff;cursor:pointer;font-size:1.15rem;font-weight:700;transition:opacity .2s}
-.abtn:hover{opacity:.85}
-.titem{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;margin-bottom:6px}
-.tcheck{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:.68rem;color:#fff;font-weight:700}
-.tcheck.ok{background:#22c55e;border-color:#22c55e}
-.ttxt{flex:1;font-size:.87rem}
-.ttxt.done{text-decoration:line-through;opacity:.38}
-.dbtn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.82rem;padding:4px;transition:color .2s}
-.dbtn:hover{color:#ef4444}
-.divid{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 7px}
-
-/* HABITS */
-.hcard{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:13px;margin-bottom:9px}
-.hhdr{display:flex;align-items:center;gap:10px;margin-bottom:11px}
-.hcheck{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.8rem;font-weight:700;transition:all .2s}
-.hcheck.ok{background:#22c55e;border-color:#22c55e}
-.hname{flex:1;font-size:.89rem;font-weight:600}
-.hstrk{font-size:.76rem;color:#f97316}
-.wgrid{display:flex;gap:4px}
-.wcell{flex:1}
-.wlbl{font-size:.58rem;color:var(--muted);text-align:center;margin-bottom:4px;text-transform:capitalize;font-weight:500}
-.wdot{height:26px;border-radius:6px;background:var(--border);transition:background .3s}
-.wdot.ok{background:#22c55e}
-.wdot.td{outline:1.5px solid var(--accent);outline-offset:2px}
-
-/* MEALS */
-.gbtn{width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:11px;color:#fff;font-family:var(--font);font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s;margin-top:10px}
-.gbtn:hover:not(:disabled){opacity:.88}
-.gbtn:disabled{opacity:.45;cursor:default}
-.mres{line-height:1.8;font-size:.9rem}
-.mres b{color:#d8b4fe}
-
-/* EMPTY */
-.empty{text-align:center;padding:36px 18px;color:var(--muted)}
-.empty .ei{font-size:2.4rem;display:block;margin-bottom:10px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<div class="glow" id="glow"></div>
-<div class="app">
+  <div class="glow" id="glow"></div>
+  <div id="toast"></div>
+  <div class="app">
 
-  <!-- HEADER -->
-  <div class="hdr">
-    <div class="hdr-left">
-      <h1>✦ Mon Espace</h1>
-      <div class="date" id="date-el"></div>
+    <!-- HEADER -->
+    <div class="hdr">
+      <div class="hdr-left">
+        <img src="logo.png" alt="Ambiance" class="logo">
+        <h1>✦ Mon Espace</h1>
+        <div class="date" id="date-el"></div>
+      </div>
+      <div class="wx" id="wx">
+        <div style="font-size:.72rem;color:var(--muted)">Chargement…</div>
+      </div>
     </div>
-    <div class="wx" id="wx"><div style="font-size:.72rem;color:var(--muted)">Chargement…</div></div>
-  </div>
 
-  <!-- NAV -->
-  <div class="nav">
-    <button class="nav-btn on" onclick="tab('ambiance')" id="nt-ambiance">🌙 Ambiance</button>
-    <button class="nav-btn" onclick="tab('dash')" id="nt-dash">🗂 Journée</button>
-    <button class="nav-btn" onclick="tab('repas')" id="nt-repas">🍽 Repas</button>
-  </div>
+    <!-- FORECAST BAR -->
+    <div class="fcst-bar" id="fcst-bar"></div>
 
-  <!-- ===== AMBIANCE ===== -->
-  <div id="s-ambiance">
-    <div class="moods">
-      <button class="mood-btn" onclick="mood('focus')" id="mb-focus">🎯 Concentration</button>
-      <button class="mood-btn" onclick="mood('calm')"  id="mb-calm">🌊 Sérénité</button>
-      <button class="mood-btn" onclick="mood('create')" id="mb-create">✨ Créativité</button>
-      <button class="mood-btn" onclick="mood('energy')" id="mb-energy">⚡ Énergie</button>
-      <button class="mood-btn" onclick="mood('dream')" id="mb-dream">🌙 Rêverie</button>
+    <!-- NAV -->
+    <div class="nav">
+      <button class="nav-btn on" onclick="tab('ambiance')" id="nt-ambiance">🌙 Ambiance</button>
+      <button class="nav-btn" onclick="tab('dash')" id="nt-dash">🗂 Journée</button>
+      <button class="nav-btn" onclick="tab('repas')" id="nt-repas">🍽 Repas</button>
     </div>
-    <canvas id="cv" width="680" height="170"></canvas>
-    <div class="pal" id="pal">
-      <div class="sw" style="background:rgba(255,255,255,.06)"></div>
-      <div class="sw" style="background:rgba(255,255,255,.06)"></div>
-      <div class="sw" style="background:rgba(255,255,255,.06)"></div>
-      <div class="sw" style="background:rgba(255,255,255,.06)"></div>
-      <div class="sw" style="background:rgba(255,255,255,.06)"></div>
-    </div>
-    <div class="card" id="qcard">
-      <div class="lbl">✦ Citation</div>
-      <p class="qt" id="qt">Choisissez une ambiance pour commencer…</p>
-      <p class="qa" id="qa"></p>
-      <button class="ghost-btn" id="nqbtn" onclick="fetchQuote()" style="display:none">🔄 Nouvelle citation</button>
-    </div>
-    <div class="card" id="mcard">
-      <div class="lbl">Musique générative</div>
-      <div class="mrow">
-        <button class="play-btn" id="pbtn" onclick="toggleMusic()">▶</button>
-        <div><div class="tname" id="tname">—</div><div class="tsub" id="tsub">Sélectionnez une ambiance</div></div>
+
+    <!-- ===== AMBIANCE ===== -->
+    <div id="s-ambiance">
+      <div class="moods">
+        <button class="mood-btn" onclick="mood('focus')" id="mb-focus">🎯 Concentration</button>
+        <button class="mood-btn" onclick="mood('calm')" id="mb-calm">🌊 Sérénité</button>
+        <button class="mood-btn" onclick="mood('create')" id="mb-create">✨ Créativité</button>
+        <button class="mood-btn" onclick="mood('energy')" id="mb-energy">⚡ Énergie</button>
+        <button class="mood-btn" onclick="mood('dream')" id="mb-dream">🌙 Rêverie</button>
       </div>
-      <div class="vrow">
-        <label>Volume</label>
-        <input type="range" min="0" max="100" value="60" id="vol" oninput="document.getElementById('vv').textContent=this.value">
-        <span class="cv" id="vv">60</span>
+      <canvas id="cv" width="680" height="170"></canvas>
+      <div class="pal" id="pal">
+        <div class="sw" style="background:rgba(255,255,255,.06)"></div>
+        <div class="sw" style="background:rgba(255,255,255,.06)"></div>
+        <div class="sw" style="background:rgba(255,255,255,.06)"></div>
+        <div class="sw" style="background:rgba(255,255,255,.06)"></div>
+        <div class="sw" style="background:rgba(255,255,255,.06)"></div>
       </div>
-      <div class="viz" id="viz"></div>
-    </div>
-    <div class="cgrid">
-      <div class="card" style="margin:0">
-        <div class="lbl">Visuel</div>
-        <div class="crow"><label>Particules</label><input type="range" min="10" max="120" value="40" id="pcnt" oninput="updPC(this.value)"><span class="cv" id="pcv">40</span></div>
-        <div class="crow"><label>Vitesse</label><input type="range" min="1" max="10" value="5" id="spd" oninput="updSP(this.value)"><span class="cv" id="spv">5</span></div>
-        <div class="crow" style="margin:0"><label>Taille</label><input type="range" min="1" max="10" value="5" id="sz" oninput="updSZ(this.value)"><span class="cv" id="szv">5</span></div>
+      <div class="card" id="qcard">
+        <div class="lbl">✦ Citation</div>
+        <p class="qt" id="qt">Choisissez une ambiance pour commencer…</p>
+        <p class="qa" id="qa"></p>
+        <button class="ghost-btn" id="nqbtn" onclick="fetchQuote()" style="display:none">🔄 Nouvelle citation</button>
       </div>
-      <div class="card" style="margin:0">
-        <div class="lbl">Minuteur</div>
-        <div class="tdis" id="tdis">25:00</div>
-        <div class="tbtns">
-          <button class="tbtn" onclick="setTimer(25)">25 min</button>
-          <button class="tbtn" onclick="setTimer(45)">45 min</button>
-          <button class="tbtn" onclick="setTimer(60)">60 min</button>
-          <button class="tbtn" id="ttgl" onclick="toggleTimer()">▶ Start</button>
+      <div class="card" id="mcard">
+        <div class="lbl">Musique générative</div>
+        <div class="mrow">
+          <button class="play-btn" id="pbtn" onclick="toggleMusic()">▶</button>
+          <div>
+            <div class="tname" id="tname">—</div>
+            <div class="tsub" id="tsub">Sélectionnez une ambiance</div>
+          </div>
+        </div>
+        <div class="vrow">
+          <label>Volume</label>
+          <input type="range" min="0" max="100" value="60" id="vol"
+            oninput="document.getElementById('vv').textContent=this.value">
+          <span class="cv" id="vv">60</span>
+        </div>
+        <div class="viz" id="viz"></div>
+      </div>
+      <div class="cgrid">
+        <div class="card" style="margin:0">
+          <div class="lbl">Visuel</div>
+          <div class="crow"><label>Particules</label><input type="range" min="10" max="120" value="40" id="pcnt"
+              oninput="updPC(this.value)"><span class="cv" id="pcv">40</span></div>
+          <div class="crow"><label>Vitesse</label><input type="range" min="1" max="10" value="5" id="spd"
+              oninput="updSP(this.value)"><span class="cv" id="spv">5</span></div>
+          <div class="crow" style="margin:0"><label>Taille</label><input type="range" min="1" max="10" value="5" id="sz"
+              oninput="updSZ(this.value)"><span class="cv" id="szv">5</span></div>
+        </div>
+        <div class="card" style="margin:0">
+          <div class="lbl">Minuteur Pomodoro</div>
+          <div class="tmode">
+            <button class="tmdbtn on" onclick="setTimerMode('work')" id="tm-work">🎯 Travail</button>
+            <button class="tmdbtn" onclick="setTimerMode('short')" id="tm-short">☕ Pause</button>
+            <button class="tmdbtn" onclick="setTimerMode('long')" id="tm-long">🌿 Longue</button>
+          </div>
+          <div class="tdis" id="tdis">25:00</div>
+          <div class="tom-row" id="tcount">
+            <span class="tom">🍅</span><span class="tom">🍅</span><span class="tom">🍅</span><span class="tom">🍅</span>
+          </div>
+          <div class="tbtns">
+            <button class="tbtn" onclick="setTimer(25)">25</button>
+            <button class="tbtn" onclick="setTimer(45)">45</button>
+            <button class="tbtn" onclick="setTimer(60)">60</button>
+            <input type="number" id="tcustom" class="tcin" min="1" max="180" placeholder="?"
+              title="Durée personnalisée (min)" onchange="if(+this.value>0)setTimer(+this.value)">
+            <button class="tbtn" id="ttgl" onclick="toggleTimer()">▶ Start</button>
+          </div>
+          <div class="notif-hint" id="notif-hint" onclick="reqNotif()">🔔 Activer les notifications</div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ===== DASH ===== -->
-  <div id="s-dash" style="display:none">
-    <div class="card">
-      <div class="lbl">✅ Tâches</div>
-      <div class="irow">
-        <input id="ti" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTodo()">
-        <button class="abtn" onclick="addTodo()">+</button>
+    <!-- ===== DASH ===== -->
+    <div id="s-dash" style="display:none">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="st-tasks">0/0</div>
+          <div class="stat-lbl">✅ Tâches</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="st-habits">0/0</div>
+          <div class="stat-lbl">📊 Habitudes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="st-pom">0</div>
+          <div class="stat-lbl">🍅 Pomodoros</div>
+        </div>
       </div>
-      <div id="tlist"></div>
-    </div>
-    <div class="card">
-      <div class="lbl">📊 Habitudes</div>
-      <div class="irow">
-        <input id="hi" placeholder="Nouvelle habitude…" onkeydown="if(event.key==='Enter')addHabit()">
-        <button class="abtn" onclick="addHabit()">+</button>
+      <div class="card">
+        <div class="lbl">✅ Tâches</div>
+        <div class="irow">
+          <input id="ti" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTodo()">
+          <button class="abtn" onclick="addTodo()">+</button>
+        </div>
+        <div class="prio-row">
+          <span class="prio-lbl">Priorité :</span>
+          <button class="prio-btn" id="pb-high" onclick="setPrio('high')" title="Haute priorité">🔴</button>
+          <button class="prio-btn on" id="pb-med" onclick="setPrio('med')" title="Priorité normale">🟡</button>
+          <button class="prio-btn" id="pb-low" onclick="setPrio('low')" title="Basse priorité">🟢</button>
+        </div>
+        <div id="tlist"></div>
       </div>
-      <div id="hlist"></div>
+      <div class="card">
+        <div class="lbl">📝 Journal du jour</div>
+        <textarea class="itxt" id="jnl"
+          placeholder="Comment se passe ta journée ? Tes pensées, ressentis, idées…"></textarea>
+        <div class="j-btns">
+          <button class="ghost-btn" style="margin-top:0" onclick="saveJournal()">💾 Sauvegarder</button>
+          <button class="ghost-btn" style="margin-top:0" onclick="analyzeJournal()">✨ Analyse IA</button>
+        </div>
+        <div class="j-analysis" id="j-analysis"></div>
+      </div>
+      <div class="card">
+        <div class="lbl">📊 Habitudes</div>
+        <div class="irow">
+          <input id="hi" placeholder="Nouvelle habitude…" onkeydown="if(event.key==='Enter')addHabit()">
+          <button class="abtn" onclick="addHabit()">+</button>
+        </div>
+        <div id="hlist"></div>
+      </div>
     </div>
-  </div>
 
-  <!-- ===== REPAS ===== -->
-  <div id="s-repas" style="display:none">
-    <div class="card">
-      <div class="lbl">🧑‍🍳 Ingrédients disponibles</div>
-      <textarea class="itxt" id="ing" placeholder="Ex: poulet, courgettes, riz, tomates, crème fraîche…"></textarea>
-      <button class="gbtn" id="gbtn" onclick="genMeals()">✨ Générer des idées de repas</button>
+    <!-- ===== REPAS ===== -->
+    <div id="s-repas" style="display:none">
+      <div class="card">
+        <div class="lbl">🧑‍🍳 Ingrédients disponibles</div>
+        <textarea class="itxt" id="ing" placeholder="Ex: poulet, courgettes, riz, tomates, crème fraîche…"></textarea>
+        <button class="gbtn" id="gbtn" onclick="genMeals()">✨ Générer des idées de repas</button>
+      </div>
+      <div class="card" id="mealcard" style="display:none">
+        <div class="lbl">💡 Idées pour vous</div>
+        <div id="mres"></div>
+        <button class="ghost-btn" onclick="genMeals()" style="margin-top:12px">🔄 Autres idées</button>
+      </div>
+      <div class="empty" id="mempty"><span class="ei">🍳</span>Entrez vos ingrédients et laissez l'IA vous inspirer !
+      </div>
     </div>
-    <div class="card" id="mealcard" style="display:none">
-      <div class="lbl">💡 Idées pour vous</div>
-      <div class="mres" id="mres"></div>
-      <button class="ghost-btn" onclick="genMeals()" style="margin-top:12px">🔄 Autres idées</button>
-    </div>
-    <div class="empty" id="mempty"><span class="ei">🍳</span>Entrez vos ingrédients et laissez l'IA vous inspirer !</div>
-  </div>
 
-</div>
-<script>
-// ===== DATE =====
-const nowD=new Date();
-document.getElementById('date-el').textContent=nowD.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-const TODAY=nowD.toISOString().slice(0,10);
+  </div><!-- /app -->
 
-// ===== WEATHER =====
-const WI={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌦️",61:"🌧️",63:"🌧️",65:"🌧️",71:"❄️",73:"❄️",75:"❄️",80:"🌧️",81:"🌧️",82:"🌧️",95:"⛈️"};
-const WD={0:"Dégagé",1:"Peu nuageux",2:"Part. nuageux",3:"Couvert",45:"Brouillard",48:"Brouillard",51:"Bruine légère",53:"Bruine",55:"Bruine dense",61:"Pluie légère",63:"Pluie",65:"Pluie forte",71:"Neige légère",73:"Neige",75:"Neige forte",80:"Averses",81:"Averses",82:"Averses fortes",95:"Orage"};
-
-async function wxFetch(lat,lon){
-  try{
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,apparent_temperature&timezone=auto`);
-    const d=await r.json();const w=d.current;
-    document.getElementById('wx').innerHTML=`<div class="wx-icon">${WI[w.weather_code]||'🌡️'}</div><div><div class="wx-temp">${Math.round(w.temperature_2m)}°</div><div class="wx-desc">${WD[w.weather_code]||''}</div><div class="wx-feels">Ressenti ${Math.round(w.apparent_temperature)}°</div></div>`;
-  }catch(e){document.getElementById('wx').innerHTML='<div style="font-size:.72rem;color:var(--muted)">Météo indisponible</div>';}
-}
-if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>wxFetch(p.coords.latitude,p.coords.longitude),()=>wxFetch(44.8378,-0.5792));
-else wxFetch(44.8378,-0.5792);
-
-// ===== TABS =====
-function tab(name){
-  ['ambiance','dash','repas'].forEach(t=>{
-    document.getElementById('s-'+t).style.display=t===name?'block':'none';
-    document.getElementById('nt-'+t).classList.toggle('on',t===name);
-  });
-}
-
-// ===== MOODS =====
-const MOODS={
-  focus:{colors:['#0d1b2a','#1b3a5c','#2e6b9e','#5ba3d0','#a8dadc'],accent:'#5ba3d0',type:'dots',
-    prompt:'Citation courte et précise sur la concentration, la clarté mentale ou la discipline. Auteur réel varié.',
-    music:{name:"Onde alpha — concentration",scale:[261,294,329,392,440],tempo:1.4,wave:'sine',base:40}},
-  calm:{colors:['#0a2e1f','#145a32','#1e8449','#52b788','#95d5b2'],accent:'#52b788',type:'waves',
-    prompt:'Citation courte et apaisante sur la sérénité, la paix ou la nature. Auteur réel varié.',
-    music:{name:"Drone naturel — sérénité",scale:[220,247,277,330,370],tempo:2.2,wave:'sine',base:20}},
-  create:{colors:['#1a0a2e','#4a1a7a','#9b59b6','#c77dff','#e0aaff'],accent:'#c77dff',type:'sparks',
-    prompt:'Citation courte et inspirante sur la créativité, l\'art ou l\'imagination. Auteur réel varié.',
-    music:{name:"Arpège stellaire — créativité",scale:[349,392,466,523,587],tempo:0.9,wave:'triangle',base:0}},
-  energy:{colors:['#2d0000','#7b1a00','#d62828','#f77f00','#fcbf49'],accent:'#f77f00',type:'burst',
-    prompt:'Citation courte et percutante sur l\'énergie, la puissance ou l\'action. Auteur réel varié.',
-    music:{name:"Pulse rythmique — énergie",scale:[130,165,196,220,261],tempo:0.5,wave:'sawtooth',base:60}},
-  dream:{colors:['#080c1a','#1a2040','#344080','#7b8cde','#c5caf0'],accent:'#7b8cde',type:'stars',
-    prompt:'Citation courte et poétique sur les rêves, l\'imaginaire ou l\'infini. Auteur réel varié.',
-    music:{name:"Pad onirique — rêverie",scale:[196,220,261,311,349],tempo:3.0,wave:'sine',base:7}}
-};
-
-let curMood=null;
-function mood(key){
-  curMood=key;const m=MOODS[key];
-  document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.remove('on');b.style.borderColor='';b.style.boxShadow='';});
-  const btn=document.getElementById('mb-'+key);
-  btn.classList.add('on');btn.style.borderColor=m.accent;btn.style.boxShadow=`0 0 18px ${m.accent}2e`;
-  document.getElementById('qcard').style.borderColor=m.accent+'40';
-  document.getElementById('mcard').style.borderColor=m.accent+'40';
-  document.getElementById('tname').textContent=m.music.name;
-  document.getElementById('tsub').textContent=key.charAt(0).toUpperCase()+key.slice(1);
-  document.getElementById('pal').innerHTML=m.colors.map(c=>`<div class="sw" style="background:${c}"></div>`).join('');
-  document.getElementById('glow').style.background=`radial-gradient(ellipse at 15% 15%,${m.accent}18 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,${m.accent}0e 0%,transparent 55%)`;
-  document.documentElement.style.setProperty('--accent',m.accent);
-  setVizColor(m.accent);
-  if(musicPlaying){stopMusic();musicPlaying=true;document.getElementById('pbtn').textContent='⏸';setVizOn(true);startLoop();}
-  startCanvas(key);
-  fetchQuote();
-  document.getElementById('nqbtn').style.display='inline-block';
-}
-
-// ===== AI QUOTE =====
-async function fetchQuote(){
-  if(!curMood)return;
-  document.getElementById('qt').innerHTML='<span class="pulse">Génération en cours…</span>';
-  document.getElementById('qa').textContent='';
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
-        messages:[{role:'user',content:`${MOODS[curMood].prompt} Réponds UNIQUEMENT avec la citation entre guillemets français « », un saut de ligne, puis le nom de l'auteur précédé d'un tiret. Rien d'autre.`}]})});
-    const d=await r.json();const txt=d.content[0].text.trim();
-    const lines=txt.split('\n').filter(l=>l.trim());
-    document.getElementById('qt').textContent=lines[0]||txt;
-    document.getElementById('qa').textContent=lines[1]||'';
-  }catch(e){document.getElementById('qt').textContent='« Une erreur est survenue. »';}
-}
-
-// ===== AI MEALS =====
-async function genMeals(){
-  const ing=document.getElementById('ing').value.trim();if(!ing)return;
-  const btn=document.getElementById('gbtn');btn.disabled=true;btn.textContent='🤔 L\'IA réfléchit…';
-  document.getElementById('mempty').style.display='none';document.getElementById('mealcard').style.display='none';
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
-        messages:[{role:'user',content:`Ingrédients dispo : ${ing}. Propose 3 idées de repas simples et délicieux. Pour chaque : emoji + nom en **gras** + 1 phrase de description appétissante.`}]})});
-    const d=await r.json();
-    const html=d.content[0].text.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
-    document.getElementById('mres').innerHTML=html;document.getElementById('mealcard').style.display='block';
-  }catch(e){document.getElementById('mres').textContent='Erreur. Réessayez.';document.getElementById('mealcard').style.display='block';}
-  btn.disabled=false;btn.textContent='✨ Générer des idées de repas';
-}
-
-// ===== TODOS =====
-let todos=[];
-(async()=>{try{const r=await window.storage.get('todos');if(r)todos=JSON.parse(r.value);}catch(e){}renderTodos();})();
-async function saveTodos(){try{await window.storage.set('todos',JSON.stringify(todos));}catch(e){}renderTodos();}
-function addTodo(){const i=document.getElementById('ti');if(!i.value.trim())return;todos.push({id:Date.now(),text:i.value.trim(),done:false});i.value='';saveTodos();}
-function togTodo(id){todos=todos.map(t=>t.id===id?{...t,done:!t.done}:t);saveTodos();}
-function delTodo(id){todos=todos.filter(t=>t.id!==id);saveTodos();}
-function renderTodos(){
-  const el=document.getElementById('tlist');
-  if(!todos.length){el.innerHTML='<div class="empty"><span class="ei">✅</span>Aucune tâche pour l\'instant !</div>';return;}
-  const act=todos.filter(t=>!t.done),dn=todos.filter(t=>t.done);
-  let h='';
-  act.forEach(t=>{h+=`<div class="titem"><button class="tcheck" onclick="togTodo(${t.id})"></button><span class="ttxt">${esc(t.text)}</span><button class="dbtn" onclick="delTodo(${t.id})">✕</button></div>`;});
-  if(dn.length){h+=`<div class="divid">Terminées (${dn.length})</div>`;dn.forEach(t=>{h+=`<div class="titem"><button class="tcheck ok" onclick="togTodo(${t.id})">✓</button><span class="ttxt done">${esc(t.text)}</span><button class="dbtn" onclick="delTodo(${t.id})">✕</button></div>`;});}
-  el.innerHTML=h;
-}
-
-// ===== HABITS =====
-let habits=[];
-(async()=>{try{const r=await window.storage.get('habits');if(r)habits=JSON.parse(r.value);}catch(e){}renderHabits();})();
-async function saveHabits(){try{await window.storage.set('habits',JSON.stringify(habits));}catch(e){}renderHabits();}
-function addHabit(){const i=document.getElementById('hi');if(!i.value.trim())return;habits.push({id:Date.now(),name:i.value.trim(),days:[]});i.value='';saveHabits();}
-function togHabit(id){habits=habits.map(h=>{if(h.id!==id)return h;const done=h.days.includes(TODAY);return{...h,days:done?h.days.filter(d=>d!==TODAY):[...h.days,TODAY]};});saveHabits();}
-function delHabit(id){habits=habits.filter(h=>h.id!==id);saveHabits();}
-function streak(h){let s=0,d=new Date();while(true){const k=d.toISOString().slice(0,10);if(h.days.includes(k)){s++;d.setDate(d.getDate()-1);}else break;}return s;}
-function renderHabits(){
-  const el=document.getElementById('hlist');
-  if(!habits.length){el.innerHTML='<div class="empty"><span class="ei">📊</span>Ajoutez vos premières habitudes !</div>';return;}
-  const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return{k:d.toISOString().slice(0,10),l:d.toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,2)};});
-  el.innerHTML=habits.map(h=>{
-    const done=h.days.includes(TODAY),s=streak(h);
-    const grid=last7.map(day=>`<div class="wcell"><div class="wlbl">${day.l}</div><div class="wdot${h.days.includes(day.k)?' ok':''}${day.k===TODAY?' td':''}"></div></div>`).join('');
-    return`<div class="hcard"><div class="hhdr"><button class="hcheck${done?' ok':''}" onclick="togHabit(${h.id})">${done?'✓':''}</button><span class="hname">${esc(h.name)}</span><span class="hstrk">🔥 ${s}j</span><button class="dbtn" onclick="delHabit(${h.id})">✕</button></div><div class="wgrid">${grid}</div></div>`;
-  }).join('');
-}
-
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-// ===== VISUALIZER =====
-const vizEl=document.getElementById('viz');
-for(let i=0;i<18;i++){const b=document.createElement('div');b.className='vb';const h=5+Math.random()*17,d=(.25+Math.random()*.5).toFixed(2);b.style.setProperty('--h',h+'px');b.style.setProperty('--d',d+'s');b.style.height='3px';b.style.animationDelay=(Math.random()*.4).toFixed(2)+'s';vizEl.appendChild(b);}
-function setVizColor(c){document.querySelectorAll('.vb').forEach(b=>b.style.background=c+'77');}
-function setVizOn(on){document.querySelectorAll('.vb').forEach(b=>{b.className='vb'+(on?' p':'');});}
-
-// ===== AUDIO =====
-let actx=null,musicPlaying=false,mNodes=[],mTO=null;
-function getActx(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
-function stopMusic(){mNodes.forEach(n=>{try{n.stop();}catch(e){}});mNodes=[];if(mTO)clearTimeout(mTO);setVizOn(false);document.getElementById('pbtn').textContent='▶';musicPlaying=false;}
-function pNote(freq,t,dur,wave,g,ctx,dest){const o=ctx.createOscillator(),gn=ctx.createGain(),v=document.getElementById('vol').value/100*.18;o.type=wave;o.frequency.setValueAtTime(freq,t);gn.gain.setValueAtTime(0,t);gn.gain.linearRampToValueAtTime(g*v,t+.08);gn.gain.linearRampToValueAtTime(0,t+dur*.9);o.connect(gn);gn.connect(dest);o.start(t);o.stop(t+dur);mNodes.push(o);}
-function startLoop(){
-  if(!curMood)return;const ctx=getActx(),m=MOODS[curMood].music,mst=ctx.createGain();mst.gain.value=1;mst.connect(ctx.destination);
-  if(m.base>0){const dr=ctx.createOscillator(),dg=ctx.createGain(),v=document.getElementById('vol').value/100*.04;dr.type='sine';dr.frequency.value=m.base;dg.gain.value=v;dr.connect(dg);dg.connect(mst);dr.start();mNodes.push(dr);}
-  let t=ctx.currentTime;
-  function sched(){if(!musicPlaying)return;const now=ctx.currentTime;for(let i=0;i<4;i++){const f=m.scale[Math.floor(Math.random()*m.scale.length)]*(Math.random()>.7?2:1),d=m.tempo*(.5+Math.random()*1.5);pNote(f,t,d,m.wave,.25,ctx,mst);t+=m.tempo*(.4+Math.random()*.8);}mTO=setTimeout(sched,Math.max(100,(t-now-1)*1000));}
-  sched();
-}
-function toggleMusic(){if(!curMood)return;if(musicPlaying){stopMusic();}else{musicPlaying=true;document.getElementById('pbtn').textContent='⏸';setVizOn(true);if(curMood)setVizColor(MOODS[curMood].accent);startLoop();}}
-
-// ===== CANVAS =====
-let animId=null,parts=[],spd=1,szm=1,pct=40;
-function updPC(v){document.getElementById('pcv').textContent=v;pct=+v;if(curMood)startCanvas(curMood);}
-function updSP(v){document.getElementById('spv').textContent=v;spd=v/5;}
-function updSZ(v){document.getElementById('szv').textContent=v;szm=v/5;}
-
-function startCanvas(key){
-  if(animId)cancelAnimationFrame(animId);
-  parts=[];const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=680,H=170,m=MOODS[key],n=pct;
-  if(key==='focus'){for(let i=0;i<n;i++)parts.push({x:Math.random()*W,y:Math.random()*H,r:1.5+Math.random()*2.5,sp:.2+Math.random()*.4,ph:Math.random()*Math.PI*2});}
-  else if(key==='calm'){for(let i=0;i<Math.min(n,10);i++)parts.push({yb:14+i*18,amp:8+Math.random()*14,fr:.01+Math.random()*.006,ph:Math.random()*Math.PI*2,sp:.008+Math.random()*.006,al:.12+(9-i)*.04});}
-  else if(key==='create'){for(let i=0;i<n;i++)parts.push({x:Math.random()*W,y:Math.random()*H,r:1+Math.random()*3,ang:Math.random()*Math.PI*2,sp:.4+Math.random()*.8,hue:260+Math.random()*80,ph:Math.random()*Math.PI*2});}
-  else if(key==='energy'){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1.5+Math.random()*3;parts.push({x:W/2,y:H/2,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:1.5+Math.random()*3,life:Math.random(),dec:.005+Math.random()*.01,hue:20+Math.random()*30});}}
-  else if(key==='dream'){for(let i=0;i<n;i++)parts.push({x:Math.random()*W,y:Math.random()*H,r:.6+Math.random()*2,tw:Math.random()*Math.PI*2,ts:.015+Math.random()*.04,dr:(Math.random()-.5)*.15});}
-  let t=0;
-  function draw(){
-    t+=.016;const s=spd,z=szm;
-    const gr=ctx.createLinearGradient(0,0,W,H);gr.addColorStop(0,m.colors[0]);gr.addColorStop(.5,m.colors[1]);gr.addColorStop(1,m.colors[2]);
-    ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
-    if(key==='focus'){parts.forEach(p=>{p.y-=p.sp*s;if(p.y<-p.r)p.y=H+p.r;const a=.3+.4*Math.sin(t*1.5+p.ph);ctx.beginPath();ctx.arc(p.x,p.y,p.r*z,0,Math.PI*2);ctx.fillStyle=`rgba(91,163,208,${a})`;ctx.fill();});}
-    else if(key==='calm'){parts.forEach((p,i)=>{ctx.beginPath();for(let x=0;x<=W;x+=4){const y=p.yb+Math.sin(x*p.fr+t*p.sp*40*s+p.ph)*p.amp*z;i===0&&x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}ctx.strokeStyle=`rgba(82,183,136,${p.al})`;ctx.lineWidth=1.5*z;ctx.stroke();});}
-    else if(key==='create'){parts.forEach(p=>{p.ang+=.012*p.sp*s;p.x+=Math.sin(p.ang)*p.sp*s*.7;p.y+=Math.cos(p.ang*.8)*p.sp*s*.5;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;const a=.4+.5*Math.abs(Math.sin(t*p.sp+p.ph));ctx.beginPath();ctx.arc(p.x,p.y,p.r*z,0,Math.PI*2);ctx.fillStyle=`hsla(${p.hue+Math.sin(t*.5)*30},80%,70%,${a})`;ctx.fill();});}
-    else if(key==='energy'){ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(0,0,W,H);parts.forEach(p=>{p.x+=p.vx*s;p.y+=p.vy*s;p.life-=p.dec*s;if(p.life<=0){const a=Math.random()*Math.PI*2,sp=1.5+Math.random()*3;p.x=W/2+(Math.random()-.5)*40;p.y=H/2+(Math.random()-.5)*20;p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;p.life=.8+Math.random()*.2;}ctx.beginPath();ctx.arc(p.x,p.y,p.r*z*p.life,0,Math.PI*2);ctx.fillStyle=`hsla(${p.hue},100%,65%,${p.life*.8})`;ctx.fill();});}
-    else if(key==='dream'){parts.forEach(p=>{p.tw+=p.ts*s;p.x+=p.dr*s;if(p.x<0)p.x=W;if(p.x>W)p.x=0;const a=.1+.7*(.5+.5*Math.sin(p.tw));const r=p.r*z*(.7+.6*Math.abs(Math.sin(p.tw*1.2)));ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=`rgba(197,202,240,${a})`;ctx.fill();});}
-    animId=requestAnimationFrame(draw);
-  }draw();
-}
-
-// ===== TIMER =====
-let tSec=25*60,tRun=false,tInt=null;
-function fmt(s){const m=Math.floor(s/60),sc=s%60;return`${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;}
-function setTimer(min){if(tRun)toggleTimer();tSec=min*60;document.getElementById('tdis').textContent=fmt(tSec);}
-function toggleTimer(){
-  tRun=!tRun;const btn=document.getElementById('ttgl');
-  if(tRun){
-    btn.textContent='⏸ Pause';btn.classList.add('at');
-    if(curMood)btn.style.borderColor=MOODS[curMood].accent;
-    tInt=setInterval(()=>{tSec--;document.getElementById('tdis').textContent=fmt(tSec);if(tSec<=0){clearInterval(tInt);tRun=false;btn.textContent='▶ Start';btn.classList.remove('at');document.getElementById('tdis').textContent='✓ Fini !';}},1000);
-  }else{clearInterval(tInt);btn.textContent='▶ Reprendre';btn.classList.remove('at');}
-}
-</script>
+  <script src="script.js"></script>
 </body>
+
 </html>
